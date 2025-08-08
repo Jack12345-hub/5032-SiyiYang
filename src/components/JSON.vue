@@ -153,8 +153,6 @@ const authorClass = (author) => ({
 })
 const authorStyle = (author) =>
   author.name === 'George Orwell' ? { color: 'white', fontWeight: '600' } : {}
-
-/** 现在 <template> 可以直接使用上面这些变量 */
 </script>
 
 <style scoped>
