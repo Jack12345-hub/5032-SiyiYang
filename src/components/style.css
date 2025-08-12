@@ -1,6 +1,0 @@
-/* 所有 h1 标签的样式 */
-h1 {
-  text-align: center; /* 居中 */
-  margin-top: 20px; /* 顶部留白 */
-  text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5); /* 阴影 */
-}

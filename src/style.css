@@ -1,0 +1,21 @@
+/* 所有 h1 标签的样式 */
+h1 {
+  text-align: center; /* 居中 */
+  margin-top: 20px; /* 顶部留白 */
+  text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5); /* 阴影 */
+}
+.form {
+  text-align: center; /* 表单内容居中 */
+  margin-top: 50px; /* 与页面顶部距离 */
+}
+#username:focus,
+#password:focus,
+#isAustralian:focus,
+#reason:focus,
+#gender:focus {
+  border-color: #ff6347; /* 番茄色边框 */
+  background-color: #ffebe8; /* 浅桃色背景 */
+}
+select[id='gender'] {
+  background-color: #d3d3d3; /* 浅灰色背景 */
+}
