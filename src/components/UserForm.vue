@@ -106,26 +106,34 @@
       </div>
     </form>
 
-    <!-- User cards -->
-    <div class="row mt-4">
-      <div v-for="(user, index) in users" :key="index" class="col-md-3 col-sm-6 col-12 mb-3">
-        <div class="card">
-          <div class="card-header bg-primary text-white">User Information</div>
-          <div class="card-body">
-            <p><strong>Username:</strong> {{ user.username }}</p>
-            <p><strong>Password:</strong> {{ user.password }}</p>
-            <p><strong>Australian Resident:</strong> {{ user.isAustralian ? 'Yes' : 'No' }}</p>
-            <p><strong>Gender:</strong> {{ user.gender }}</p>
-            <p><strong>Reason:</strong> {{ user.reason }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- PrimeVue DataTable -->
+    <DataTable
+      class="mt-4"
+      :value="users"
+      dataKey="username"
+      stripedRows
+      paginator
+      :rows="5"
+      :rowsPerPageOptions="[5, 10, 20]"
+      tableStyle="min-width: 50rem"
+    >
+      <Column field="username" header="Username" sortable />
+      <Column field="password" header="Password" />
+      <Column header="Australian Resident" sortable>
+        <template #body="{ data }">
+          {{ data.isAustralian ? 'true' : 'false' }}
+        </template>
+      </Column>
+      <Column field="gender" header="Gender" sortable />
+      <Column field="reason" header="Reason" />
+    </DataTable>
   </div>
 </template>
 
 <script setup>
 import { reactive, ref } from 'vue'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
 
 // form model
 const form = reactive({
@@ -205,8 +213,8 @@ const validateGender = (blur) => {
 
 const validateReason = (blur) => {
   const value = form.reason.trim()
-  if (value.length < 10) {
-    if (blur) errors.reason = 'Reason must be at least 10 characters.'
+  if (!value) {
+    if (blur) errors.reason = 'Reason cannot be empty.'
   } else {
     errors.reason = null
   }
@@ -214,14 +222,12 @@ const validateReason = (blur) => {
 
 /* -------- submit ---------- */
 const handleSubmit = () => {
-  // run all validations in "blur" mode (show messages)
   validateName(true)
   validatePassword(true)
   validateResident(true)
   validateGender(true)
   validateReason(true)
 
-  // if any error exists, focus first invalid field and stop
   if (errors.username) {
     usernameRef.value?.focus()
     return
@@ -243,7 +249,6 @@ const handleSubmit = () => {
     return
   }
 
-  // all good -> submit
   users.value.push({ ...form })
   clearForm()
 }
@@ -255,7 +260,6 @@ const clearForm = () => {
   form.isAustralian = false
   form.gender = ''
   form.reason = ''
-  // clear errors
   errors.username = errors.password = errors.resident = errors.gender = errors.reason = null
 }
 
