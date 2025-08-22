@@ -1,18 +1,39 @@
 <template>
   <div class="container mt-4">
     <h2 class="text-center mb-4">User Information Form</h2>
-    <form @submit.prevent="handleSubmit">
+
+    <!-- Key: add ref so that we can trigger native validation on submit -->
+    <form ref="formRef" @submit.prevent="handleSubmit" class="needs-validation">
       <div class="row">
         <!-- Username -->
         <div class="col-md-6 col-12 mb-3">
           <label for="username" class="form-label">Username</label>
-          <input v-model="form.username" type="text" id="username" class="form-control" />
+          <input
+            v-model="form.username"
+            type="text"
+            id="username"
+            class="form-control"
+            required
+            minlength="3"
+            maxlength="20"
+            autocomplete="username"
+            spellcheck="false"
+          />
         </div>
 
         <!-- Password -->
         <div class="col-md-6 col-12 mb-3">
           <label for="password" class="form-label">Password</label>
-          <input v-model="form.password" type="password" id="password" class="form-control" />
+          <input
+            v-model="form.password"
+            type="password"
+            id="password"
+            class="form-control"
+            required
+            minlength="4"
+            maxlength="10"
+            autocomplete="new-password"
+          />
         </div>
 
         <!-- Checkbox -->
@@ -22,7 +43,9 @@
               v-model="form.isAustralian"
               type="checkbox"
               id="isAustralian"
+              name="isAustralian"
               class="form-check-input"
+              required
             />
             <label for="isAustralian" class="form-check-label">Australian Resident?</label>
           </div>
@@ -31,7 +54,7 @@
         <!-- Gender -->
         <div class="col-md-6 col-12 mb-3">
           <label for="gender" class="form-label">Gender</label>
-          <select v-model="form.gender" id="gender" class="form-select">
+          <select v-model="form.gender" id="gender" class="form-select" required>
             <option disabled value="">Select...</option>
             <option value="female">Female</option>
             <option value="male">Male</option>
@@ -42,7 +65,15 @@
         <!-- Reason -->
         <div class="col-12 mb-3">
           <label for="reason" class="form-label">Reason for joining</label>
-          <textarea v-model="form.reason" id="reason" rows="3" class="form-control"></textarea>
+          <textarea
+            v-model="form.reason"
+            id="reason"
+            rows="3"
+            class="form-control"
+            required
+            minlength="10"
+            maxlength="300"
+          ></textarea>
         </div>
       </div>
 
@@ -86,8 +117,16 @@ const form = reactive({
 })
 
 const users = ref([])
+const formRef = ref(null)
 
 const handleSubmit = () => {
+  // Key: prevent invalid submission and show native validation tooltips
+  const el = formRef.value
+  if (el && !el.checkValidity()) {
+    el.reportValidity()
+    return
+  }
+
   users.value.push({ ...form })
   clearForm()
 }
@@ -98,6 +137,9 @@ const clearForm = () => {
   form.isAustralian = false
   form.gender = ''
   form.reason = ''
+
+  // Optional: reset native validation state
+  if (formRef.value) formRef.value.reset()
 }
 
 const clearCards = () => {
