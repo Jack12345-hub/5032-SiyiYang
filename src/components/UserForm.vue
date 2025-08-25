@@ -1,10 +1,10 @@
 <template>
   <div class="container mt-4">
-    <h2 class="text-center mb-4">User Information Form</h2>
+    <h2 class="text-center mb-4">W5. Library Registration Form</h2>
 
     <form @submit.prevent="handleSubmit" novalidate>
       <div class="row">
-        <!-- Username -->
+        <!-- Row 1: Username + Gender -->
         <div class="col-md-6 col-12 mb-3">
           <label for="username" class="form-label">Username</label>
           <input
@@ -23,65 +23,6 @@
           </div>
         </div>
 
-        <!-- Password -->
-        <div class="col-md-6 col-12 mb-3">
-          <label for="password" class="form-label">Password</label>
-          <input
-            v-model="form.password"
-            type="password"
-            id="password"
-            class="form-control"
-            :class="{ 'is-invalid': !!errors.password }"
-            @blur="validatePassword(true)"
-            @input="validatePassword(false)"
-            ref="passwordRef"
-            aria-describedby="passwordHelp"
-          />
-          <div v-if="errors.password" id="passwordHelp" class="text-danger small mt-1">
-            {{ errors.password }}
-          </div>
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="col-md-6 col-12 mb-3">
-          <label for="confirmPassword" class="form-label">Confirm Password</label>
-          <input
-            v-model="form.confirmPassword"
-            type="password"
-            id="confirmPassword"
-            class="form-control"
-            :class="{ 'is-invalid': !!errors.confirmPassword }"
-            @blur="validateConfirmPassword(true)"
-            @input="validateConfirmPassword(false)"
-            ref="confirmPasswordRef"
-            aria-describedby="confirmHelp"
-          />
-          <div v-if="errors.confirmPassword" id="confirmHelp" class="text-danger small mt-1">
-            {{ errors.confirmPassword }}
-          </div>
-        </div>
-
-        <!-- Australian Resident -->
-        <div class="col-md-6 col-12 mb-3">
-          <div class="form-check">
-            <input
-              v-model="form.isAustralian"
-              type="checkbox"
-              id="isAustralian"
-              name="isAustralian"
-              class="form-check-input"
-              @change="validateResident(true)"
-              ref="residentRef"
-              aria-describedby="residentHelp"
-            />
-            <label for="isAustralian" class="form-check-label">Australian Resident?</label>
-          </div>
-          <div v-if="errors.resident" id="residentHelp" class="text-danger small mt-1">
-            {{ errors.resident }}
-          </div>
-        </div>
-
-        <!-- Gender -->
         <div class="col-md-6 col-12 mb-3">
           <label for="gender" class="form-label">Gender</label>
           <select
@@ -104,7 +45,65 @@
           </div>
         </div>
 
-        <!-- Reason -->
+        <!-- Row 2: Password + Confirm Password -->
+        <div class="col-md-6 col-12 mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input
+            v-model="form.password"
+            type="password"
+            id="password"
+            class="form-control"
+            :class="{ 'is-invalid': !!errors.password }"
+            @blur="validatePassword(true)"
+            @input="validatePassword(false)"
+            ref="passwordRef"
+            aria-describedby="passwordHelp"
+          />
+          <div v-if="errors.password" id="passwordHelp" class="text-danger small mt-1">
+            {{ errors.password }}
+          </div>
+        </div>
+
+        <div class="col-md-6 col-12 mb-3">
+          <label for="confirmPassword" class="form-label">Confirm Password</label>
+          <input
+            v-model="form.confirmPassword"
+            type="password"
+            id="confirmPassword"
+            class="form-control"
+            :class="{ 'is-invalid': !!errors.confirmPassword }"
+            @blur="validateConfirmPassword(true)"
+            @input="validateConfirmPassword(false)"
+            ref="confirmPasswordRef"
+            aria-describedby="confirmHelp"
+          />
+          <div v-if="errors.confirmPassword" id="confirmHelp" class="text-danger small mt-1">
+            {{ errors.confirmPassword }}
+          </div>
+        </div>
+
+        <!-- Row 3: Australian Resident + (spacer) -->
+        <div class="col-md-6 col-12 mb-3">
+          <div class="form-check mt-2">
+            <input
+              v-model="form.isAustralian"
+              type="checkbox"
+              id="isAustralian"
+              name="isAustralian"
+              class="form-check-input"
+              @change="validateResident(true)"
+              ref="residentRef"
+              aria-describedby="residentHelp"
+            />
+            <label for="isAustralian" class="form-check-label">Australian Resident?</label>
+          </div>
+          <div v-if="errors.resident" id="residentHelp" class="text-danger small mt-1">
+            {{ errors.resident }}
+          </div>
+        </div>
+        <div class="col-md-6 col-12 mb-3"><!-- spacer to keep grid balanced --></div>
+
+        <!-- Row 4: Reason -->
         <div class="col-12 mb-3">
           <label for="reason" class="form-label">Reason for joining</label>
           <textarea
@@ -116,10 +115,14 @@
             @blur="validateReason(true)"
             @input="validateReason(false)"
             ref="reasonRef"
-            aria-describedby="reasonHelp"
+            aria-describedby="reasonHelp reasonHint"
           ></textarea>
           <div v-if="errors.reason" id="reasonHelp" class="text-danger small mt-1">
             {{ errors.reason }}
+          </div>
+          <!-- green hint when the text contains "friend" -->
+          <div v-if="reasonMessage" id="reasonHint" class="text-success small mt-1">
+            {{ reasonMessage }}
           </div>
         </div>
       </div>
@@ -178,7 +181,7 @@ const form = reactive({
   reason: '',
 })
 
-/* ---------------- error state ---------------- */
+/* ---------------- error & helper state ---------------- */
 const errors = reactive({
   username: null,
   password: null,
@@ -187,6 +190,7 @@ const errors = reactive({
   gender: null,
   reason: null,
 })
+const reasonMessage = ref(null) // green hint when "friend" appears
 
 /* ---------------- users list ---------------- */
 const users = ref([])
@@ -231,7 +235,7 @@ const validatePassword = (blur) => {
     errors.password = null
   }
 
-  // also validate confirm password when password changes
+  // also re-check confirm password when password changes
   validateConfirmPassword(false)
 }
 
@@ -268,22 +272,33 @@ const validateReason = (blur) => {
   const value = form.reason.trim()
   if (!value) {
     if (blur) errors.reason = 'Reason cannot be empty.'
+    reasonMessage.value = null
   } else {
     errors.reason = null
+    // show green hint when the text contains "friend"
+    if (value.toLowerCase().includes('friend')) {
+      reasonMessage.value = 'Great to have a friend'
+    } else {
+      reasonMessage.value = null
+    }
   }
 }
 
 /* ---------------- submit function ---------------- */
 const handleSubmit = () => {
   validateName(true)
+  validateGender(true)
   validatePassword(true)
   validateConfirmPassword(true)
   validateResident(true)
-  validateGender(true)
   validateReason(true)
 
   if (errors.username) {
     usernameRef.value?.focus()
+    return
+  }
+  if (errors.gender) {
+    genderRef.value?.focus()
     return
   }
   if (errors.password) {
@@ -296,10 +311,6 @@ const handleSubmit = () => {
   }
   if (errors.resident) {
     residentRef.value?.focus()
-    return
-  }
-  if (errors.gender) {
-    genderRef.value?.focus()
     return
   }
   if (errors.reason) {
@@ -319,6 +330,7 @@ const clearForm = () => {
   form.isAustralian = false
   form.gender = ''
   form.reason = ''
+  reasonMessage.value = null
   errors.username =
     errors.password =
     errors.confirmPassword =
@@ -339,7 +351,5 @@ const maskPassword = (pwd) => {
 </script>
 
 <style scoped>
-/* Add red border for invalid input fields.
-   Bootstrap already provides styles for .is-invalid,
-   so this section is optional unless you want custom styling. */
+/* Bootstrap provides .is-invalid visuals; add custom styles only if needed. */
 </style>
