@@ -2,7 +2,7 @@
   <div class="container mt-4">
     <h2 class="text-center mb-4">User Information Form</h2>
 
-    <form @submit.prevent="handleSubmit">
+    <form @submit.prevent="handleSubmit" novalidate>
       <div class="row">
         <!-- Username -->
         <div class="col-md-6 col-12 mb-3">
@@ -12,11 +12,13 @@
             type="text"
             id="username"
             class="form-control"
+            :class="{ 'is-invalid': !!errors.username }"
             @blur="validateName(true)"
             @input="validateName(false)"
             ref="usernameRef"
+            aria-describedby="usernameHelp"
           />
-          <div v-if="errors.username" class="text-danger small mt-1">
+          <div v-if="errors.username" id="usernameHelp" class="text-danger small mt-1">
             {{ errors.username }}
           </div>
         </div>
@@ -29,12 +31,33 @@
             type="password"
             id="password"
             class="form-control"
+            :class="{ 'is-invalid': !!errors.password }"
             @blur="validatePassword(true)"
             @input="validatePassword(false)"
             ref="passwordRef"
+            aria-describedby="passwordHelp"
           />
-          <div v-if="errors.password" class="text-danger small mt-1">
+          <div v-if="errors.password" id="passwordHelp" class="text-danger small mt-1">
             {{ errors.password }}
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="col-md-6 col-12 mb-3">
+          <label for="confirmPassword" class="form-label">Confirm Password</label>
+          <input
+            v-model="form.confirmPassword"
+            type="password"
+            id="confirmPassword"
+            class="form-control"
+            :class="{ 'is-invalid': !!errors.confirmPassword }"
+            @blur="validateConfirmPassword(true)"
+            @input="validateConfirmPassword(false)"
+            ref="confirmPasswordRef"
+            aria-describedby="confirmHelp"
+          />
+          <div v-if="errors.confirmPassword" id="confirmHelp" class="text-danger small mt-1">
+            {{ errors.confirmPassword }}
           </div>
         </div>
 
@@ -49,10 +72,11 @@
               class="form-check-input"
               @change="validateResident(true)"
               ref="residentRef"
+              aria-describedby="residentHelp"
             />
             <label for="isAustralian" class="form-check-label">Australian Resident?</label>
           </div>
-          <div v-if="errors.resident" class="text-danger small mt-1">
+          <div v-if="errors.resident" id="residentHelp" class="text-danger small mt-1">
             {{ errors.resident }}
           </div>
         </div>
@@ -64,16 +88,18 @@
             v-model="form.gender"
             id="gender"
             class="form-select"
+            :class="{ 'is-invalid': !!errors.gender }"
             @blur="validateGender(true)"
             @change="validateGender(true)"
             ref="genderRef"
+            aria-describedby="genderHelp"
           >
             <option value="">Select...</option>
             <option value="female">Female</option>
             <option value="male">Male</option>
             <option value="other">Other</option>
           </select>
-          <div v-if="errors.gender" class="text-danger small mt-1">
+          <div v-if="errors.gender" id="genderHelp" class="text-danger small mt-1">
             {{ errors.gender }}
           </div>
         </div>
@@ -86,11 +112,13 @@
             id="reason"
             rows="3"
             class="form-control"
+            :class="{ 'is-invalid': !!errors.reason }"
             @blur="validateReason(true)"
             @input="validateReason(false)"
             ref="reasonRef"
+            aria-describedby="reasonHelp"
           ></textarea>
-          <div v-if="errors.reason" class="text-danger small mt-1">
+          <div v-if="errors.reason" id="reasonHelp" class="text-danger small mt-1">
             {{ errors.reason }}
           </div>
         </div>
@@ -116,9 +144,14 @@
       :rows="5"
       :rowsPerPageOptions="[5, 10, 20]"
       tableStyle="min-width: 50rem"
+      v-if="users.length"
     >
       <Column field="username" header="Username" sortable />
-      <Column field="password" header="Password" />
+      <Column header="Password">
+        <template #body="{ data }">
+          {{ maskPassword(data.password) }}
+        </template>
+      </Column>
       <Column header="Australian Resident" sortable>
         <template #body="{ data }">
           {{ data.isAustralian ? 'true' : 'false' }}
@@ -135,34 +168,38 @@ import { reactive, ref } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 
-// form model
+/* ---------------- form state ---------------- */
 const form = reactive({
   username: '',
   password: '',
+  confirmPassword: '',
   isAustralian: false,
   gender: '',
   reason: '',
 })
 
-// error store
+/* ---------------- error state ---------------- */
 const errors = reactive({
   username: null,
   password: null,
+  confirmPassword: null,
   resident: null,
   gender: null,
   reason: null,
 })
 
+/* ---------------- users list ---------------- */
 const users = ref([])
 
-// refs for focusing the first invalid field
+/* ---------------- refs for focusing ---------------- */
 const usernameRef = ref(null)
 const passwordRef = ref(null)
+const confirmPasswordRef = ref(null)
 const residentRef = ref(null)
 const genderRef = ref(null)
 const reasonRef = ref(null)
 
-/* -------- validators ---------- */
+/* ---------------- validation functions ---------------- */
 const validateName = (blur) => {
   const value = form.username.trim()
   if (value.length < 3) {
@@ -173,7 +210,7 @@ const validateName = (blur) => {
 }
 
 const validatePassword = (blur) => {
-  const password = form.password
+  const password = form.password || ''
   const minLength = 8
   const hasUppercase = /[A-Z]/.test(password)
   const hasLowercase = /[a-z]/.test(password)
@@ -192,6 +229,22 @@ const validatePassword = (blur) => {
     if (blur) errors.password = 'Password must contain at least one special character.'
   } else {
     errors.password = null
+  }
+
+  // also validate confirm password when password changes
+  validateConfirmPassword(false)
+}
+
+const validateConfirmPassword = (blur) => {
+  const p1 = form.password || ''
+  const p2 = form.confirmPassword || ''
+
+  if (!p2) {
+    if (blur) errors.confirmPassword = 'Please re-enter your password.'
+  } else if (p1 !== p2) {
+    if (blur) errors.confirmPassword = 'Passwords do not match.'
+  } else {
+    errors.confirmPassword = null
   }
 }
 
@@ -220,10 +273,11 @@ const validateReason = (blur) => {
   }
 }
 
-/* -------- submit ---------- */
+/* ---------------- submit function ---------------- */
 const handleSubmit = () => {
   validateName(true)
   validatePassword(true)
+  validateConfirmPassword(true)
   validateResident(true)
   validateGender(true)
   validateReason(true)
@@ -234,6 +288,10 @@ const handleSubmit = () => {
   }
   if (errors.password) {
     passwordRef.value?.focus()
+    return
+  }
+  if (errors.confirmPassword) {
+    confirmPasswordRef.value?.focus()
     return
   }
   if (errors.resident) {
@@ -253,17 +311,35 @@ const handleSubmit = () => {
   clearForm()
 }
 
-/* -------- helpers ---------- */
+/* ---------------- helpers ---------------- */
 const clearForm = () => {
   form.username = ''
   form.password = ''
+  form.confirmPassword = ''
   form.isAustralian = false
   form.gender = ''
   form.reason = ''
-  errors.username = errors.password = errors.resident = errors.gender = errors.reason = null
+  errors.username =
+    errors.password =
+    errors.confirmPassword =
+    errors.resident =
+    errors.gender =
+    errors.reason =
+      null
 }
 
 const clearCards = () => {
   users.value = []
 }
+
+const maskPassword = (pwd) => {
+  const len = (pwd || '').length
+  return '*'.repeat(Math.max(6, len || 6))
+}
 </script>
+
+<style scoped>
+/* Add red border for invalid input fields.
+   Bootstrap already provides styles for .is-invalid,
+   so this section is optional unless you want custom styling. */
+</style>
